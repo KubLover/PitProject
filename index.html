@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roxandi site</title>
+    <style>
+        body{
+            font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #1E1E1E;
+            background-color: #1E1E1E;
+        }
+        
+        #profile-container{
+            position: absolute;
+            top: 3%;
+            left: 1%;
+            width: 20%;
+            height: 30%;
+            border-radius: 5%;
+            background-color: #FCF5E4;
+            border-color: #EDB217;
+            border-style: solid;
+            border-width: 5px;
+            /* display: flex; */
+        }
+        
+        #profile-photo img{
+            position: relative;
+            left: 25%;
+            max-width: 50%;
+            border-radius: 20%;
+            border-style: solid;
+            box-shadow: 0 5px 10px black;
+        }
+
+
+        #profile-name{
+            position: relative;
+            color: #1E1E1E;
+            text-shadow: 0 8px 18px black;
+            text-align: center;
+            bottom: 15%;
+        }
+
+        #profile-name p{
+            font-size: 50px;
+            -webkit-text-stroke: 4px;
+        }
+
+        #about-me-container{
+            position: absolute;
+            width: 20%;
+            height: 60%;
+            left: 20px;
+            top: 35%;
+            background-color: #FCF5E4;
+            border-radius: 20px;
+            border-color: #EDB217;
+            border-width: 5px;
+            border-style: solid;
+        }
+
+        #about-me-container h1{
+            position: relative;
+            text-shadow: 0 2px 4px black;
+            top: -10px;
+            font-size: 43px;
+            text-align: center;
+        }
+
+        #about-me-text{
+            width: 320px;
+            text-align: left;
+        }
+
+        #other-stuff{
+            position: absolute;
+            top: 3%;
+            left: 22%;
+            width: 77%;
+            height: 92%;
+            border-radius: 20px;
+            background-color: #FCF5E4;
+            border-color: #EDB217;
+            border-style: solid;
+            border-width: 5px;
+            display: flex;
+            text-align: right;
+        }
+        canvas {
+            position: relative;
+            top: 2%;
+            background-color: black;
+            border-radius: 2%;
+            border: 4px solid #1E1E1E;
+        } 
+
+        #stuff-game{
+            width: 480px;
+            height: 540px;
+            text-align: center;
+        }
+
+        #stuff-game p{
+            position: relative;
+            bottom: 50px;
+            font-size: 60px;
+            -webkit-text-stroke: 2px;
+            text-shadow: 0 2px 5px black;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="profile-container">
+        <div id="profile-photo">
+            <img src="src/profile_photo.png" alt="ProfilePhoto">
+        </div>
+        <div id="profile-name">
+            <p>Roxandi</p>
+        </div>
+    </div>
+    <div id="about-me-container">
+        <div id="about-me-label">
+            <h1>Обо мне</h1>
+        </div>
+        <dir id="about-me-text">
+            <p>Я всего-лишь обычный студент СибГУТИ.</p>
+            <p>Не бейте сильно <3</p>
+        </dir>
+    </div>
+    <div id="other-stuff">
+        <div id="stuff-game">
+            <canvas width="400" height="400" id="game">
+
+            </canvas>
+            <p>Snake game</p>
+        </div>
+    </div>
+    <script>
+        var canvas = document.getElementById('game');
+        var context = canvas.getContext('2d');
+
+        // the canvas width & height, snake x & y, and the apple x & y, all need to be a multiples of the grid size in order for collision detection to work
+        // (e.g. 16 * 25 = 400)
+        var grid = 16;
+        var count = 0;
+
+        var snake = {
+        x: 160,
+        y: 160,
+
+        // snake velocity. moves one grid length every frame in either the x or y direction
+        dx: grid,
+        dy: 0,
+
+        // keep track of all grids the snake body occupies
+        cells: [],
+
+        // length of the snake. grows when eating an apple
+        maxCells: 4
+        };
+        var apple = {
+        x: 320,
+        y: 320
+        };
+
+        // get random whole numbers in a specific range
+        // @see https://stackoverflow.com/a/1527820/2124254
+        function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min)) + min;
+        }
+
+        // game loop
+        function loop() {
+        requestAnimationFrame(loop);
+
+        // slow game loop to 15 fps instead of 60 (60/15 = 4)
+        if (++count < 4) {
+            return;
+        }
+
+        count = 0;
+        context.clearRect(0,0,canvas.width,canvas.height);
+
+        // move snake by it's velocity
+        snake.x += snake.dx;
+        snake.y += snake.dy;
+
+        // wrap snake position horizontally on edge of screen
+        if (snake.x < 0) {
+            snake.x = canvas.width - grid;
+        }
+        else if (snake.x >= canvas.width) {
+            snake.x = 0;
+        }
+
+        // wrap snake position vertically on edge of screen
+        if (snake.y < 0) {
+            snake.y = canvas.height - grid;
+        }
+        else if (snake.y >= canvas.height) {
+            snake.y = 0;
+        }
+
+        // keep track of where snake has been. front of the array is always the head
+        snake.cells.unshift({x: snake.x, y: snake.y});
+
+        // remove cells as we move away from them
+        if (snake.cells.length > snake.maxCells) {
+            snake.cells.pop();
+        }
+
+        // draw apple
+        context.fillStyle = 'red';
+        context.fillRect(apple.x, apple.y, grid-1, grid-1);
+
+        // draw snake one cell at a time
+        context.fillStyle = 'green';
+        snake.cells.forEach(function(cell, index) {
+
+            // drawing 1 px smaller than the grid creates a grid effect in the snake body so you can see how long it is
+            context.fillRect(cell.x, cell.y, grid-1, grid-1);
+
+            // snake ate apple
+            if (cell.x === apple.x && cell.y === apple.y) {
+            snake.maxCells++;
+
+            // canvas is 400x400 which is 25x25 grids
+            apple.x = getRandomInt(0, 25) * grid;
+            apple.y = getRandomInt(0, 25) * grid;
+            }
+
+            // check collision with all cells after this one (modified bubble sort)
+            for (var i = index + 1; i < snake.cells.length; i++) {
+
+            // snake occupies same space as a body part. reset game
+            if (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y) {
+                snake.x = 160;
+                snake.y = 160;
+                snake.cells = [];
+                snake.maxCells = 4;
+                snake.dx = grid;
+                snake.dy = 0;
+
+                apple.x = getRandomInt(0, 25) * grid;
+                apple.y = getRandomInt(0, 25) * grid;
+            }
+            }
+        });
+        }
+
+        // listen to keyboard events to move the snake
+        document.addEventListener('keydown', function(e) {
+        // prevent snake from backtracking on itself by checking that it's
+        // not already moving on the same axis (pressing left while moving
+        // left won't do anything, and pressing right while moving left
+        // shouldn't let you collide with your own body)
+
+        // left arrow key
+        if (e.which === 37 && snake.dx === 0) {
+            snake.dx = -grid;
+            snake.dy = 0;
+        }
+        // up arrow key
+        else if (e.which === 38 && snake.dy === 0) {
+            snake.dy = -grid;
+            snake.dx = 0;
+        }
+        // right arrow key
+        else if (e.which === 39 && snake.dx === 0) {
+            snake.dx = grid;
+            snake.dy = 0;
+        }
+        // down arrow key
+        else if (e.which === 40 && snake.dy === 0) {
+            snake.dy = grid;
+            snake.dx = 0;
+        }
+        });
+
+        // start the game
+        requestAnimationFrame(loop);
+    </script>
+</body>
